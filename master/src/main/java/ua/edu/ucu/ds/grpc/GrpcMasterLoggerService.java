@@ -1,29 +1,27 @@
-package ua.edu.ucu.ds;
+package ua.edu.ucu.ds.grpc;
 
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import org.lognet.springboot.grpc.GRpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ua.edu.ucu.*;
+import ua.edu.ucu.ds.service.LogReplicatorService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @GRpcService
 public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
+
     @Autowired
-    private ManagedChannel channel;
-    private LoggerGrpc.LoggerBlockingStub loggerBlockingStub;
+    private LogReplicatorService replicatorService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcMasterLoggerService.class);
     private final List<LogMessage> logs = new ArrayList<>();
 
     public GrpcMasterLoggerService(ManagedChannel channel) {
-        this.channel = channel;
-        this.loggerBlockingStub = LoggerGrpc.newBlockingStub(channel);
         this.logs.add(LogMessage.newBuilder().setLog("Logs from Master").build());
     }
 
@@ -34,9 +32,7 @@ public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
         LOGGER.info("Received LOG:" + log.getLog());
         logs.add(log);
 
-        LOGGER.info("Replicate LOG to secondary:" + log.getLog());
-        // Replica services
-        loggerBlockingStub.appendMessage(request);
+        replicatorService.replicateLog(request);
 
         responseObserver.onNext(AppendMessageResponse.newBuilder().build());
         responseObserver.onCompleted();
@@ -45,7 +41,6 @@ public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
     @Override
     public void listMessages(ListMessagesRequest request, StreamObserver<ListMessagesResponse> responseObserver) {
         ListMessagesResponse listMessagesResponse = ListMessagesResponse.newBuilder().addAllLogs(logs).build();
-
         responseObserver.onNext(listMessagesResponse);
         responseObserver.onCompleted();
     }

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "ua.edu.ucu";
+option java_outer_classname = "LoggerService";
+
+service Logger {
+  rpc AppendMessage (AppendMessageRequest) returns (AppendMessageResponse) {}
+  rpc ListMessages (ListMessagesRequest) returns (ListMessagesResponse) {}
+}
+
+message LogMessage {
+  string log = 1;
+}
+
+message AppendMessageRequest {
+  LogMessage log = 1;
+}
+
+message AppendMessageResponse {
+}
+
+message ListMessagesRequest {
+}
+
+message ListMessagesResponse {
+  repeated LogMessage logs = 1;
+}

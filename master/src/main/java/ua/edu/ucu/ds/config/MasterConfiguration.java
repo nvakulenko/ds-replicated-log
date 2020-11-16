@@ -1,4 +1,4 @@
-package ua.edu.ucu.ds;
+package ua.edu.ucu.ds.config;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -11,7 +11,7 @@ public class MasterConfiguration {
     @Bean
     public ManagedChannel channel() {
         ManagedChannelBuilder<?> channelBuilder =
-                ManagedChannelBuilder.forAddress("0.0.0.0", 6567)
+                ManagedChannelBuilder.forAddress("secondary", 6567)
                         .usePlaintext();
         return channelBuilder.build();
     }

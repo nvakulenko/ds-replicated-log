@@ -1,0 +1,41 @@
+version: '3.8'
+######################################################
+# GRPC CLIENT
+######################################################
+networks:
+  grpc-network:
+    name: grpc-network
+
+services:
+  #  grpc_client:
+  #    container_name: client
+  #    command:   tail -f /dev/null
+  #    image: grpc-test
+  #    networks:
+  #      grpc-network:
+  #        aliases:
+  #          - client
+  #
+
+  grpc_master:
+    build:
+      context: master/
+    container_name: master
+    networks:
+      grpc-network:
+        aliases:
+          - server
+    ports:
+      - "8080:8080"
+      - "6565:6565"
+
+  grpc_secondary:
+    container_name: secondary
+    build:
+      context: secondary/
+    networks:
+      grpc-network:
+        aliases:
+          - secondary
+    ports:
+      - "6567:6567"

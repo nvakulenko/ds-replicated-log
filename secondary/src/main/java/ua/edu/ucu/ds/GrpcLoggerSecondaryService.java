@@ -29,7 +29,7 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
         logs.add(log);
 
         try {
-            LOGGER.info("Sleep for 5 seconds:" + log.getLog());
+            LOGGER.info("Sleep for 5 seconds: " + log.getLog());
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             LOGGER.error(e.getLocalizedMessage(), e);
@@ -41,8 +41,9 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
 
     @Override
     public void listMessages(ListMessagesRequest request, StreamObserver<ListMessagesResponse> responseObserver) {
-        ListMessagesResponse listMessagesResponse = ListMessagesResponse.newBuilder().addAllLogs(logs).build();
+        LOGGER.info("Return LOGS from Secondary");
 
+        ListMessagesResponse listMessagesResponse = ListMessagesResponse.newBuilder().addAllLogs(logs).build();
         responseObserver.onNext(listMessagesResponse);
         responseObserver.onCompleted();
     }

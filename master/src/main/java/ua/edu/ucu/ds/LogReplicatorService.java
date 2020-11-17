@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ua.edu.ucu.*;
-import ua.edu.ucu.ds.GrpcMasterLoggerService;
 
 @Service
 public class LogReplicatorService {
@@ -28,7 +27,6 @@ public class LogReplicatorService {
 
     public void replicateLog(AppendMessageRequest request) {
         LOGGER.info("Replicate LOG to secondary-1: " + request.getLog());
-        // Replica services
         secondary1.appendMessage(request);
 
         LOGGER.info("Replicate LOG to secondary-2: " + request.getLog());

@@ -1,13 +1,11 @@
-package ua.edu.ucu.ds.grpc;
+package ua.edu.ucu.ds;
 
-import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import org.lognet.springboot.grpc.GRpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ua.edu.ucu.*;
-import ua.edu.ucu.ds.service.LogReplicatorService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +19,7 @@ public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcMasterLoggerService.class);
     private final List<LogMessage> logs = new ArrayList<>();
 
-    public GrpcMasterLoggerService(ManagedChannel channel) {
+    public GrpcMasterLoggerService() {
         this.logs.add(LogMessage.newBuilder().setLog("Logs from Master").build());
     }
 

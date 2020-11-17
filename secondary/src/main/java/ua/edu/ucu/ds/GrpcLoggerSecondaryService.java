@@ -8,6 +8,8 @@ import ua.edu.ucu.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @GRpcService
 public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
@@ -25,6 +27,13 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
 
         LOGGER.info("Received LOG:" + log.getLog());
         logs.add(log);
+
+        try {
+            LOGGER.info("Sleep for 5 seconds:" + log.getLog());
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getLocalizedMessage(), e);
+        }
 
         responseObserver.onNext(AppendMessageResponse.newBuilder().build());
         responseObserver.onCompleted();

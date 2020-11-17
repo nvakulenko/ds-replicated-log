@@ -22,7 +22,7 @@ services:
   grpc_secondary-1:
     container_name: secondary-1
     build:
-      context: secondary/
+      context: secondary-java/
     networks:
       grpc-network:
         aliases:
@@ -33,7 +33,7 @@ services:
   grpc_secondary-2:
     container_name: secondary-2
     build:
-      context: secondary/
+      context: secondary-java/
     networks:
       grpc-network:
         aliases:

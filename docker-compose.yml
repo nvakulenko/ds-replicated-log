@@ -22,7 +22,8 @@ services:
   grpc_secondary-1:
     container_name: secondary-1
     build:
-      context: secondary-java/
+      context: secondary-python/
+    command: python3 secondary.py
     networks:
       grpc-network:
         aliases:

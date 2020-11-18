@@ -9,4 +9,4 @@ RUN pip3 install grpcio-tools
 
 ADD app /app/
 
-EXPOSE 50051 50052
+EXPOSE 6567

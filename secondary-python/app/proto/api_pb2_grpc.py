@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from proto import api_pb2 as proto_dot_api__pb2
+import api_pb2 as api__pb2
 
 
 class LoggerStub(object):
@@ -15,14 +15,14 @@ class LoggerStub(object):
             channel: A grpc.Channel.
         """
         self.AppendMessage = channel.unary_unary(
-                '/api.Logger/AppendMessage',
-                request_serializer=proto_dot_api__pb2.AppendMessageRequest.SerializeToString,
-                response_deserializer=proto_dot_api__pb2.AppendMessageResponse.FromString,
+                '/Logger/AppendMessage',
+                request_serializer=api__pb2.AppendMessageRequest.SerializeToString,
+                response_deserializer=api__pb2.AppendMessageResponse.FromString,
                 )
         self.ListMessages = channel.unary_unary(
-                '/api.Logger/ListMessages',
-                request_serializer=proto_dot_api__pb2.ListMessagesRequest.SerializeToString,
-                response_deserializer=proto_dot_api__pb2.ListMessagesResponse.FromString,
+                '/Logger/ListMessages',
+                request_serializer=api__pb2.ListMessagesRequest.SerializeToString,
+                response_deserializer=api__pb2.ListMessagesResponse.FromString,
                 )
 
 
@@ -46,17 +46,17 @@ def add_LoggerServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'AppendMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.AppendMessage,
-                    request_deserializer=proto_dot_api__pb2.AppendMessageRequest.FromString,
-                    response_serializer=proto_dot_api__pb2.AppendMessageResponse.SerializeToString,
+                    request_deserializer=api__pb2.AppendMessageRequest.FromString,
+                    response_serializer=api__pb2.AppendMessageResponse.SerializeToString,
             ),
             'ListMessages': grpc.unary_unary_rpc_method_handler(
                     servicer.ListMessages,
-                    request_deserializer=proto_dot_api__pb2.ListMessagesRequest.FromString,
-                    response_serializer=proto_dot_api__pb2.ListMessagesResponse.SerializeToString,
+                    request_deserializer=api__pb2.ListMessagesRequest.FromString,
+                    response_serializer=api__pb2.ListMessagesResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'api.Logger', rpc_method_handlers)
+            'Logger', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -75,9 +75,9 @@ class Logger(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/api.Logger/AppendMessage',
-            proto_dot_api__pb2.AppendMessageRequest.SerializeToString,
-            proto_dot_api__pb2.AppendMessageResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/Logger/AppendMessage',
+            api__pb2.AppendMessageRequest.SerializeToString,
+            api__pb2.AppendMessageResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -92,8 +92,8 @@ class Logger(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/api.Logger/ListMessages',
-            proto_dot_api__pb2.ListMessagesRequest.SerializeToString,
-            proto_dot_api__pb2.ListMessagesResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/Logger/ListMessages',
+            api__pb2.ListMessagesRequest.SerializeToString,
+            api__pb2.ListMessagesResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -23,7 +23,7 @@ class GrpcLogger(pb2_grpc.LoggerServicer):
 if __name__ == '__main__':
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     pb2_grpc.add_LoggerServicer_to_server(GrpcLogger(), server)
-    server.add_insecure_port('[::]:50052')
+    server.add_insecure_port('[::]:6567')
     server.start()
     try:
         while True:

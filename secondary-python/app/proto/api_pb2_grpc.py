@@ -15,12 +15,12 @@ class LoggerStub(object):
             channel: A grpc.Channel.
         """
         self.AppendMessage = channel.unary_unary(
-                '/api.Logger/AppendMessage',
+                '/Logger/AppendMessage',
                 request_serializer=proto_dot_api__pb2.AppendMessageRequest.SerializeToString,
                 response_deserializer=proto_dot_api__pb2.AppendMessageResponse.FromString,
                 )
         self.ListMessages = channel.unary_unary(
-                '/api.Logger/ListMessages',
+                '/Logger/ListMessages',
                 request_serializer=proto_dot_api__pb2.ListMessagesRequest.SerializeToString,
                 response_deserializer=proto_dot_api__pb2.ListMessagesResponse.FromString,
                 )
@@ -56,7 +56,7 @@ def add_LoggerServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'api.Logger', rpc_method_handlers)
+            'Logger', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -75,7 +75,7 @@ class Logger(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/api.Logger/AppendMessage',
+        return grpc.experimental.unary_unary(request, target, '/Logger/AppendMessage',
             proto_dot_api__pb2.AppendMessageRequest.SerializeToString,
             proto_dot_api__pb2.AppendMessageResponse.FromString,
             options, channel_credentials,
@@ -92,7 +92,7 @@ class Logger(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/api.Logger/ListMessages',
+        return grpc.experimental.unary_unary(request, target, '/Logger/ListMessages',
             proto_dot_api__pb2.ListMessagesRequest.SerializeToString,
             proto_dot_api__pb2.ListMessagesResponse.FromString,
             options, channel_credentials,

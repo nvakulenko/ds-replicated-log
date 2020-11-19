@@ -1,6 +1,11 @@
 # ds-replicated-log
-## Assumptions:
-The logger-replication cluster consists of a master node and 2 secondaries.
+
+## Implementation
+- The master is written in Java. Secondaries are written in Python and Java.
+- gRPC protocol is used for communication.
+
+## Running the app:
+- The logger-replication cluster consists of a master node and 2 secondaries.
 
 Hosts are predefined in docker-compose.yml:
 - master:6565

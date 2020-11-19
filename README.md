@@ -5,7 +5,7 @@
 - gRPC protocol is used for communication.
 
 ## Running the app:
-- The logger-replication cluster consists of a master node and 2 secondaries.
+The logger-replication cluster consists of a master node and 2 secondaries.
 
 Hosts are predefined in docker-compose.yml:
 - master:6565

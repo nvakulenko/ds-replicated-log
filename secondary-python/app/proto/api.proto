@@ -18,6 +18,12 @@ message AppendMessageRequest {
 }
 
 message AppendMessageResponse {
+  AppendResponseCode responseCode = 1;
+}
+
+enum AppendResponseCode {
+  OK = 0;
+  SOME_ERROR = 1;
 }
 
 message ListMessagesRequest {

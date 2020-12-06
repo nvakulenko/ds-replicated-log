@@ -23,6 +23,8 @@ services:
     container_name: secondary-1
     build:
       context: secondary-python/
+    environment:
+      PYTHONUNBUFFERED: 1
     command: python3 secondary.py
     networks:
       grpc-network:

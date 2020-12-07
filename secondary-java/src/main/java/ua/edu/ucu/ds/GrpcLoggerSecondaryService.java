@@ -6,27 +6,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.edu.ucu.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
 @GRpcService
 public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcLoggerSecondaryService.class);
-    private final List<LogMessage> logs = new ArrayList<>();
+    private static final ConcurrentHashMap<Integer, LogMessage> logs = new ConcurrentHashMap<>();
 
     public GrpcLoggerSecondaryService() {
-        this.logs.add(LogMessage.newBuilder().setLog("Logs from Secondary").build());
+        this.logs.put(0, LogMessage.newBuilder().setLog("Zero log from Secondary").build());
     }
 
     @Override
     public void appendMessage(AppendMessageRequest request, StreamObserver<AppendMessageResponse> responseObserver) {
         LogMessage log = request.getLog();
 
-        LOGGER.info("Received LOG:" + log.getLog());
-        logs.add(log);
+        LOGGER.info("Received LOG: "+ log.toString());
+        if (logs.containsKey(log.getId())) {
+            responseObserver.onNext(AppendMessageResponse.newBuilder()
+                    .setResponseCode(AppendResponseCode.ERROR_LOG_WITH_ID_ALREADY_EXISTS)
+                    .setResponseMessage(
+                            "Idempotent operation: log with id " + log.getId() + " already exists")
+                    .build());
+            responseObserver.onCompleted();
+        }
+
+        logs.putIfAbsent(log.getId(), log);
 
         try {
             LOGGER.info("Sleep for 5 seconds: " + log.getLog());
@@ -43,7 +49,7 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
     public void listMessages(ListMessagesRequest request, StreamObserver<ListMessagesResponse> responseObserver) {
         LOGGER.info("Return LOGS from Secondary");
 
-        ListMessagesResponse listMessagesResponse = ListMessagesResponse.newBuilder().addAllLogs(logs).build();
+        ListMessagesResponse listMessagesResponse = ListMessagesResponse.newBuilder().addAllLogs(logs.values()).build();
         responseObserver.onNext(listMessagesResponse);
         responseObserver.onCompleted();
     }

@@ -26,19 +26,19 @@ public class LogReplicatorService {
 
     public LogReplicatorService() {
         ManagedChannelBuilder<?> channelBuilder1 =
-//                ManagedChannelBuilder.forAddress("secondary-1", 6567)
-//                        .usePlaintext();
-                ManagedChannelBuilder.forAddress("0.0.0.0", 6567)
+                ManagedChannelBuilder.forAddress("secondary-1", 6567)
                         .usePlaintext();
-        LoggerGrpc.LoggerBlockingStub secondary1 = LoggerGrpc.newBlockingStub(channelBuilder1.build());
-//        ManagedChannelBuilder<?> channelBuilder2 =
-//                ManagedChannelBuilder.forAddress("secondary-2", 6567)
+//                ManagedChannelBuilder.forAddress("0.0.0.0", 6567)
 //                        .usePlaintext();
-//        LoggerGrpc.LoggerBlockingStub secondary2 = LoggerGrpc.newBlockingStub(channelBuilder2.build());
+        LoggerGrpc.LoggerBlockingStub secondary1 = LoggerGrpc.newBlockingStub(channelBuilder1.build());
+        ManagedChannelBuilder<?> channelBuilder2 =
+                ManagedChannelBuilder.forAddress("secondary-2", 6567)
+                        .usePlaintext();
+        LoggerGrpc.LoggerBlockingStub secondary2 = LoggerGrpc.newBlockingStub(channelBuilder2.build());
 
         secondaries = new HashMap<>(2);
         secondaries.put("secondary-1", secondary1);
-        // secondaries.put("secondary-2", secondary2);
+        secondaries.put("secondary-2", secondary2);
     }
 
     public Integer getSecondariesCount() {

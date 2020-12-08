@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'\n\nua.edu.ucuB\rLoggerServiceP\001',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0fproto/api.proto\"\x19\n\nLogMessage\x12\x0b\n\x03log\x18\x01 \x01(\t\"0\n\x14\x41ppendMessageRequest\x12\x18\n\x03log\x18\x01 \x01(\x0b\x32\x0b.LogMessage\"B\n\x15\x41ppendMessageResponse\x12)\n\x0cresponseCode\x18\x01 \x01(\x0e\x32\x13.AppendResponseCode\"\x15\n\x13ListMessagesRequest\"1\n\x14ListMessagesResponse\x12\x19\n\x04logs\x18\x01 \x03(\x0b\x32\x0b.LogMessage*,\n\x12\x41ppendResponseCode\x12\x06\n\x02OK\x10\x00\x12\x0e\n\nSOME_ERROR\x10\x01\x32\x89\x01\n\x06Logger\x12@\n\rAppendMessage\x12\x15.AppendMessageRequest\x1a\x16.AppendMessageResponse\"\x00\x12=\n\x0cListMessages\x12\x14.ListMessagesRequest\x1a\x15.ListMessagesResponse\"\x00\x42\x1d\n\nua.edu.ucuB\rLoggerServiceP\x01\x62\x06proto3'
+  serialized_pb=b'\n\x0fproto/api.proto\";\n\nLogMessage\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03log\x18\x02 \x01(\t\x12\x14\n\x0cwriteConcern\x18\x03 \x01(\x05\"0\n\x14\x41ppendMessageRequest\x12\x18\n\x03log\x18\x01 \x01(\x0b\x32\x0b.LogMessage\"[\n\x15\x41ppendMessageResponse\x12)\n\x0cresponseCode\x18\x01 \x01(\x0e\x32\x13.AppendResponseCode\x12\x17\n\x0fresponseMessage\x18\x02 \x01(\t\"\x15\n\x13ListMessagesRequest\"1\n\x14ListMessagesResponse\x12\x19\n\x04logs\x18\x01 \x03(\x0b\x32\x0b.LogMessage*Z\n\x12\x41ppendResponseCode\x12\x06\n\x02OK\x10\x00\x12\x16\n\x12\x45RROR_WRITECONCERN\x10\x01\x12$\n ERROR_LOG_WITH_ID_ALREADY_EXISTS\x10\x02\x32\x89\x01\n\x06Logger\x12@\n\rAppendMessage\x12\x15.AppendMessageRequest\x1a\x16.AppendMessageResponse\"\x00\x12=\n\x0cListMessages\x12\x14.ListMessagesRequest\x1a\x15.ListMessagesResponse\"\x00\x42\x1d\n\nua.edu.ucuB\rLoggerServiceP\x01\x62\x06proto3'
 )
 
 _APPENDRESPONSECODE = _descriptor.EnumDescriptor(
@@ -36,21 +36,27 @@ _APPENDRESPONSECODE = _descriptor.EnumDescriptor(
       type=None,
       create_key=_descriptor._internal_create_key),
     _descriptor.EnumValueDescriptor(
-      name='SOME_ERROR', index=1, number=1,
+      name='ERROR_WRITECONCERN', index=1, number=1,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='ERROR_LOG_WITH_ID_ALREADY_EXISTS', index=2, number=2,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=238,
-  serialized_end=282,
+  serialized_start=297,
+  serialized_end=387,
 )
 _sym_db.RegisterEnumDescriptor(_APPENDRESPONSECODE)
 
 AppendResponseCode = enum_type_wrapper.EnumTypeWrapper(_APPENDRESPONSECODE)
 OK = 0
-SOME_ERROR = 1
+ERROR_WRITECONCERN = 1
+ERROR_LOG_WITH_ID_ALREADY_EXISTS = 2
 
 
 
@@ -63,9 +69,23 @@ _LOGMESSAGE = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='log', full_name='LogMessage.log', index=0,
-      number=1, type=9, cpp_type=9, label=1,
+      name='id', full_name='LogMessage.id', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='log', full_name='LogMessage.log', index=1,
+      number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='writeConcern', full_name='LogMessage.writeConcern', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -82,7 +102,7 @@ _LOGMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=19,
-  serialized_end=44,
+  serialized_end=78,
 )
 
 
@@ -113,8 +133,8 @@ _APPENDMESSAGEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=46,
-  serialized_end=94,
+  serialized_start=80,
+  serialized_end=128,
 )
 
 
@@ -133,6 +153,13 @@ _APPENDMESSAGERESPONSE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='responseMessage', full_name='AppendMessageResponse.responseMessage', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -145,8 +172,8 @@ _APPENDMESSAGERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=96,
-  serialized_end=162,
+  serialized_start=130,
+  serialized_end=221,
 )
 
 
@@ -170,8 +197,8 @@ _LISTMESSAGESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=164,
-  serialized_end=185,
+  serialized_start=223,
+  serialized_end=244,
 )
 
 
@@ -202,8 +229,8 @@ _LISTMESSAGESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=187,
-  serialized_end=236,
+  serialized_start=246,
+  serialized_end=295,
 )
 
 _APPENDMESSAGEREQUEST.fields_by_name['log'].message_type = _LOGMESSAGE
@@ -262,8 +289,8 @@ _LOGGER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=285,
-  serialized_end=422,
+  serialized_start=390,
+  serialized_end=527,
   methods=[
   _descriptor.MethodDescriptor(
     name='AppendMessage',

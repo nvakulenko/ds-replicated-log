@@ -10,14 +10,28 @@ service Logger {
 }
 
 message LogMessage {
-  string log = 1;
+  int32 id = 1;
+  string log = 2;
+  int32 writeConcern = 3;
 }
 
+// idempotent on secondary
 message AppendMessageRequest {
   LogMessage log = 1;
 }
 
 message AppendMessageResponse {
+  AppendResponseCode responseCode = 1;
+  string responseMessage = 2;
+}
+
+enum AppendResponseCode {
+  OK = 0;
+  // some logical errors from master
+  ERROR_WRITECONCERN = 1;
+  // some logical errors from secondary
+  // we do not update logs
+  ERROR_LOG_WITH_ID_ALREADY_EXISTS = 2;
 }
 
 message ListMessagesRequest {

@@ -9,6 +9,8 @@ import ua.edu.ucu.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @GRpcService
 public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
@@ -17,28 +19,63 @@ public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
     private LogReplicatorService replicatorService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcMasterLoggerService.class);
-    private final List<LogMessage> logs = new ArrayList<>();
+    private final List<LogEntity> logEntities = new ArrayList<>();
+    private static final AtomicInteger counter = new AtomicInteger();
 
     public GrpcMasterLoggerService() {
-        this.logs.add(LogMessage.newBuilder().setLog("Logs from Master").build());
+        this.logEntities.add(LogEntity.builder()
+                .id(0)
+                .log("Logs from Master")
+                .writeConcern(0)
+                .build());
     }
 
     @Override
     public void appendMessage(AppendMessageRequest request, StreamObserver<AppendMessageResponse> responseObserver) {
         LogMessage log = request.getLog();
+        LOGGER.info("Received LOG: " + log.getLog());
 
-        LOGGER.info("Received LOG:" + log.getLog());
-        logs.add(log);
+        Integer secondariesCount = replicatorService.getSecondariesCount();
+        if (log.getWriteConcern() > secondariesCount + 1) {
+            LOGGER.error("Write concern is more then secondaries count. Received: " +
+                    log.getWriteConcern() + "; available secondaries:  " + secondariesCount);
+            responseObserver.onNext(
+                    AppendMessageResponse.newBuilder()
+                            .setResponseCode(AppendResponseCode.ERROR_WRITECONCERN)
+                            .setResponseMessage("Write concern is more then secondaries count")
+                            .build());
+            responseObserver.onCompleted();
+            return;
+        }
 
-        replicatorService.replicateLog(request);
+        // generate unique id and set
+        LogEntity copyLog = LogEntity.builder()
+                .id(counter.incrementAndGet())
+                .log(log.getLog())
+                .writeConcern(log.getWriteConcern())
+                .build();
 
-        responseObserver.onNext(AppendMessageResponse.newBuilder().build());
+        logEntities.add(copyLog);
+        boolean replicationResult = replicatorService.replicateLog(copyLog);
+
+        responseObserver.onNext(
+                AppendMessageResponse.newBuilder()
+                        .setResponseCode(AppendResponseCode.OK)
+                        .build());
         responseObserver.onCompleted();
     }
 
     @Override
     public void listMessages(ListMessagesRequest request, StreamObserver<ListMessagesResponse> responseObserver) {
-        ListMessagesResponse listMessagesResponse = ListMessagesResponse.newBuilder().addAllLogs(logs).build();
+        ListMessagesResponse listMessagesResponse = ListMessagesResponse.newBuilder()
+                .addAllLogs(logEntities.stream()
+                        .map(in -> LogMessage.newBuilder()
+                                .setId(in.getId())
+                                .setLog(in.getLog())
+                                .setWriteConcern(in.getWriteConcern())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
         responseObserver.onNext(listMessagesResponse);
         responseObserver.onCompleted();
     }

@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ua.edu.ucu.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,7 +22,7 @@ public class LogReplicatorService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcMasterLoggerService.class);
     private Map<String, LoggerGrpc.LoggerBlockingStub> secondaries;
-    // <LOG, SECONDARY, REPLICATION>
+    private ConcurrentHashMap<String, List<FailureInformation>> failureStatistics;
 
     public LogReplicatorService() {
         ManagedChannelBuilder<?> channelBuilder1 =
@@ -39,10 +39,18 @@ public class LogReplicatorService {
         secondaries = new HashMap<>(2);
         secondaries.put("secondary-1", secondary1);
         secondaries.put("secondary-2", secondary2);
+
+        failureStatistics = new ConcurrentHashMap<>();
+        failureStatistics.put("secondary-1", Collections.synchronizedList(new ArrayList<FailureInformation>()));
+        failureStatistics.put("secondary-2", Collections.synchronizedList(new ArrayList<FailureInformation>()));
     }
 
     public Integer getSecondariesCount() {
         return secondaries.size();
+    }
+
+    public ConcurrentHashMap<String, List<FailureInformation>> getFailureStatistics() {
+        return failureStatistics;
     }
 
     public boolean replicateLog(LogEntity log) throws IllegalArgumentException {
@@ -83,26 +91,37 @@ public class LogReplicatorService {
     }
 
     private ReplicationStatus replicateLog(LogEntity log, Map.Entry<String, LoggerGrpc.LoggerBlockingStub> secondary) {
-        for (int i = 1; i < retryAttempts; i++) {
+        for (int i = 0; i < retryAttempts; i++) {
             try {
-                LOGGER.info("Replication attempt #{} to: {}, LOG: {}", i, secondary.getKey(), log.getLog());
+                LOGGER.info("Replication attempt #{} to: {}, LOG: {}", i + 1, secondary.getKey(), log.getLog());
                 AppendMessageResponse appendMessageResponse =
                         secondary.getValue().appendMessage(buildAppendMessageRequest(log));
 
-                // TODO: check response errors
                 if (AppendResponseCode.OK.equals(appendMessageResponse.getResponseCode())) {
                     LOGGER.info("Replicated log {} successfully to {}", log.toString(), secondary.getKey());
                     return ReplicationStatus.REPLICATED;
                 } else {
-                    // TODO
-                    // handleErrors();
+                    // TODO handleErrors();
                     // connection errors - how do they look???
                     // need to test to get to know how they look
                     // logical errors
-                    // 1 - retry
+                    failureStatistics.get(secondary.getKey())
+                            .add(FailureInformation.builder()
+                                    .logId(log.getId())
+                                    .replicationStatus(ReplicationStatus.FAILED_REPLICATION)
+                                    .appendResponseCode(appendMessageResponse.getResponseCode())
+                                    .attempt(i + 1)
+                                    .build());
                 }
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
                 LOGGER.error(e.getLocalizedMessage(), e);
+                failureStatistics.get(secondary.getKey())
+                        .add(FailureInformation.builder()
+                                .logId(log.getId())
+                                .replicationStatus(ReplicationStatus.FAILED_REPLICATION)
+                                .failureReason(e.getLocalizedMessage())
+                                .attempt(i + 1)
+                                .build());
             }
         }
         return ReplicationStatus.FAILED_REPLICATION;
@@ -117,4 +136,5 @@ public class LogReplicatorService {
                         .build())
                 .build();
     }
+
 }

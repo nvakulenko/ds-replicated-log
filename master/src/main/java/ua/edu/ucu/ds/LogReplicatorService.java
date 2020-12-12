@@ -8,10 +8,7 @@ import org.springframework.stereotype.Service;
 import ua.edu.ucu.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -65,14 +62,15 @@ public class LogReplicatorService {
             CountDownLatch countDownLatch = new CountDownLatch(writeConcern - 1);
             ExecutorService executor = Executors.newFixedThreadPool(secondaries.size());
 
-            secondaries.entrySet().stream().map(
+            List<Future<ReplicationStatus>> futures = secondaries.entrySet().stream().map(
                     secondary -> {
                         return executor.submit(() -> {
                             try {
-                                ReplicationStatus replicationStatus = replicateLog(log, secondary);
+                                return replicateLog(log, secondary);
                                 // save replication status
                             } catch (Throwable e) {
                                 LOGGER.error(e.getLocalizedMessage(), e);
+                                return ReplicationStatus.FAILED_REPLICATION;
                             } finally {
                                 countDownLatch.countDown();
                             }
@@ -82,7 +80,19 @@ public class LogReplicatorService {
             LOGGER.info("Wait for " + (writeConcern - 1) + " replicas");
             countDownLatch.await();
             LOGGER.info("Received response from " + (writeConcern - 1) + " replicas");
-            return true;
+            long failureResponses = futures.stream()
+                    .filter(in -> {
+                        try {
+                            return in.isDone() && ReplicationStatus.FAILED_REPLICATION.equals(in.get());
+                        } catch (InterruptedException e) {
+                            LOGGER.error(e.getLocalizedMessage(), e);
+                            return false;
+                        } catch (ExecutionException e) {
+                            LOGGER.error(e.getLocalizedMessage(), e);
+                            return false;
+                        }
+                    }).count();
+            return failureResponses == 0;
         } catch (InterruptedException e) {
             LOGGER.error(e.getLocalizedMessage(), e);
             // by fact UNKNOWN

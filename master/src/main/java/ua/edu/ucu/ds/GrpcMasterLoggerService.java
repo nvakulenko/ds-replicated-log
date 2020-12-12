@@ -58,11 +58,15 @@ public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
         logEntities.add(copyLog);
         boolean replicationResult = replicatorService.replicateLog(copyLog);
 
-        responseObserver.onNext(
-                AppendMessageResponse.newBuilder()
-                        .setResponseCode(AppendResponseCode.OK)
-                        .build());
-        responseObserver.onCompleted();
+        if (replicationResult) {
+            responseObserver.onNext(
+                    AppendMessageResponse.newBuilder()
+                            .setResponseCode(AppendResponseCode.OK)
+                            .build());
+            responseObserver.onCompleted();
+        } else {
+            responseObserver.onError(new Exception("Replication failed"));
+        }
     }
 
     @Override

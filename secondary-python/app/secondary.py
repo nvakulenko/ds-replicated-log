@@ -10,28 +10,28 @@ import proto.api_pb2 as pb2
 class GrpcLogger(pb2_grpc.LoggerServicer):
 
     def __init__(self):
-        self.items = []
+        self.items = {0 : pb2.LogMessage(log="Zero log from Python Secondary")}
 
     def ListMessages(self, request, context):
         logging.info(f"Python secondary received ListMessages request")
-        response = pb2.ListMessagesResponse(logs=self.items)
+        response = pb2.ListMessagesResponse(logs=list(self.items.values()))
         return response
 
     def AppendMessage(self, request, context):
-        logging.info(f"Python secondary received AppendMessages request")
         item = request.log
+        logging.info(f"Python secondary received AppendMessages request {str(item.log)}")
         response = pb2.AppendMessageResponse(responseCode=0)
         try:
-            if item in self.items:
+            if item.id in self.items:
                 raise ValueError('Duplicated item')
             else:
                 delay = randint(2,10)
                 logging.info(f"Python secondary delay for {str(delay)} seconds")
                 time.sleep(delay)
-                self.items.append(item)
+                self.items[item.id] = item
                 logging.info(f"Python secondary added new item")
         except:
-            response = pb2.AppendMessageResponse(responseCode=1)
+            response = pb2.AppendMessageResponse(responseCode=2)
             logging.info(f"Python secondary error occurs")
         return response
 

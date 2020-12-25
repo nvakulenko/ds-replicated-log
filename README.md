@@ -1,3 +1,4 @@
+Team: Dmytro Voloshyniuk, Andrii Kozii, Nataliia Vakulenko
 # ds-replicated-log
 
 ## Implementation

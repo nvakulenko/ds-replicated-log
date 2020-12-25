@@ -24,7 +24,7 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
     @Override
     public void appendMessage(AppendMessageRequest request, StreamObserver<AppendMessageResponse> responseObserver) {
         LogMessage log = request.getLog();
-        LOGGER.info("Received LOG: "+ log.toString());
+        LOGGER.info("Received LOG: \n" + log.toString());
 
         // deduplication: each log should be present on secondary exactly ones
         if (logs.containsKey(log.getId())) {
@@ -38,24 +38,28 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
             return;
         }
 
-        // deduplication: each log should be present on secondary exactly ones
-        logs.putIfAbsent(log.getId(), log);
-
         // generate random int up to 5 seconds
         Random random = new Random();
-        int randomSleep = random.nextInt(5 - 1) + 1;
+        int randomSleep = random.nextInt(10 - 1) + 1;
 
         try {
             LOGGER.info("Sleep randomly generated " + randomSleep + " seconds: " + log.getLog());
-            Thread.sleep(randomSleep);
+            Thread.sleep(randomSleep * 1000);
         } catch (InterruptedException e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }
 
         if (randomSleep % 2 == 0) {
             // randomly generated internal server error
+            LOGGER.info("Finishing processing log with id " + log.getId() + " by randomly generated error");
+            if (randomSleep % 4 == 0 || randomSleep % 6 == 0) {
+                logs.putIfAbsent(log.getId(), log);
+            }
             responseObserver.onError(new InternalError("Randomly generated error"));
         } else {
+            // deduplication: each log should be present on secondary exactly ones
+            logs.putIfAbsent(log.getId(), log);
+
             responseObserver.onNext(AppendMessageResponse.newBuilder().build());
             responseObserver.onCompleted();
         }

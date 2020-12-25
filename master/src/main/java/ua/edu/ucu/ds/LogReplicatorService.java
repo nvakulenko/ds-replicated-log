@@ -11,6 +11,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static ua.edu.ucu.AppendResponseCode.*;
+
 @Service
 public class LogReplicatorService {
 
@@ -23,10 +25,10 @@ public class LogReplicatorService {
 
     public LogReplicatorService() {
         ManagedChannelBuilder<?> channelBuilder1 =
-                ManagedChannelBuilder.forAddress("secondary-1", 6567)
-                        .usePlaintext();
-//                ManagedChannelBuilder.forAddress("0.0.0.0", 6567)
+//                ManagedChannelBuilder.forAddress("secondary-1", 6567)
 //                        .usePlaintext();
+                ManagedChannelBuilder.forAddress("0.0.0.0", 6567)
+                        .usePlaintext();
         LoggerGrpc.LoggerBlockingStub secondary1 = LoggerGrpc.newBlockingStub(channelBuilder1.build());
         ManagedChannelBuilder<?> channelBuilder2 =
                 ManagedChannelBuilder.forAddress("secondary-2", 6567)
@@ -35,7 +37,7 @@ public class LogReplicatorService {
 
         secondaries = new HashMap<>(2);
         secondaries.put("secondary-1", secondary1);
-        secondaries.put("secondary-2", secondary2);
+ //       secondaries.put("secondary-2", secondary2);
 
         failureStatistics = new ConcurrentHashMap<>();
         failureStatistics.put("secondary-1", Collections.synchronizedList(new ArrayList<FailureInformation>()));
@@ -101,14 +103,27 @@ public class LogReplicatorService {
     }
 
     private ReplicationStatus replicateLog(LogEntity log, Map.Entry<String, LoggerGrpc.LoggerBlockingStub> secondary) {
-        for (int i = 0; i < retryAttempts; i++) {
+        int i = 0;
+        while (true) {
             try {
+                i++;
+
+                if (i > 2) {
+                    Thread.sleep(5000);
+                }
+
                 LOGGER.info("Replication attempt #{} to: {}, LOG: {}", i + 1, secondary.getKey(), log.getLog());
                 AppendMessageResponse appendMessageResponse =
                         secondary.getValue().appendMessage(buildAppendMessageRequest(log));
 
-                if (AppendResponseCode.OK.equals(appendMessageResponse.getResponseCode())) {
-                    LOGGER.info("Replicated log {} successfully to {}", log.toString(), secondary.getKey());
+                LOGGER.info("Received from secondary {} response code {} for log {}",
+                        secondary.getKey(),
+                        appendMessageResponse.getResponseCode(),
+                        log.getId());
+
+                if (OK.equals(appendMessageResponse.getResponseCode()) ||
+                        ERROR_LOG_WITH_ID_ALREADY_EXISTS.equals(appendMessageResponse.getResponseCode())) {
+                    LOGGER.info("Replicated log {} successfully to {}", log.getId(), secondary.getKey());
                     return ReplicationStatus.REPLICATED;
                 } else {
                     // TODO handleErrors();
@@ -134,7 +149,6 @@ public class LogReplicatorService {
                                 .build());
             }
         }
-        return ReplicationStatus.FAILED_REPLICATION;
     }
 
     private AppendMessageRequest buildAppendMessageRequest(LogEntity log) {

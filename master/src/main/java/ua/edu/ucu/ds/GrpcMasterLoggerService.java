@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ua.edu.ucu.*;
+import ua.edu.ucu.ds.health.SecondaryHealthChecker;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,8 @@ public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
 
     @Autowired
     private LogReplicatorService replicatorService;
+    @Autowired
+    private SecondaryHealthChecker quorumChecker;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcMasterLoggerService.class);
     private final List<LogEntity> logEntities = new ArrayList<>();
@@ -35,6 +38,18 @@ public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
         LogMessage log = request.getLog();
         LOGGER.info("Received LOG: " + log.getLog());
 
+        // if no quorum
+        if (!quorumChecker.isQuorumAvailable()) {
+            responseObserver.onNext(
+                    AppendMessageResponse.newBuilder()
+                            .setResponseCode(AppendResponseCode.ERROR_NO_QUORUM_IN_CLUSTER)
+                            .setResponseMessage("No Quorum in the cluster. Writes are prohibited!")
+                            .build());
+            responseObserver.onCompleted();
+            return;
+        }
+
+        // check write concerns
         Integer secondariesCount = replicatorService.getSecondariesCount();
         if (log.getWriteConcern() > secondariesCount + 1) {
             LOGGER.error("Write concern is more then secondaries count. Received: " +
@@ -48,7 +63,7 @@ public class GrpcMasterLoggerService extends LoggerGrpc.LoggerImplBase {
             return;
         }
 
-        // generate unique id and set
+        // generate unique id for the received log and set
         LogEntity copyLog = LogEntity.builder()
                 .id(counter.incrementAndGet())
                 .log(log.getLog())

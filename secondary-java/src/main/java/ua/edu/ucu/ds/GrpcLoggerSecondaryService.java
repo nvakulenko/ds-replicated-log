@@ -67,13 +67,9 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
 
     @Override
     public void listMessages(ListMessagesRequest request, StreamObserver<ListMessagesResponse> responseObserver) {
-        LOGGER.info("Return LOGS from Secondary");
-
-        // TODO: total ordering:
+        // Total ordering:
         // If secondary has received messages [msg1, msg2, msg4],
         // it shouldn’t display the message ‘msg4’ until the ‘msg3’ will be received
-
-        // filter logs
         List<LogMessage> totalOrderResult = new ArrayList<>();
         int totalOrder = 0;
 
@@ -82,9 +78,20 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
             totalOrder++;
         }
 
+        LOGGER.info("Return LOGS from Secondary: Full sequence from 0 to {}. " +
+                "Total received logs count : {}", totalOrder - 1, logs.size() - 1);
+
         ListMessagesResponse listMessagesResponse =
                 ListMessagesResponse.newBuilder().addAllLogs(totalOrderResult).build();
         responseObserver.onNext(listMessagesResponse);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void healthCheck(HealthCheckRequest request, StreamObserver<HealthCheckResponse> responseObserver) {
+        responseObserver.onNext(HealthCheckResponse.newBuilder()
+                .setStatus(HealthCheckStatus.HEALTHY)
+                .build());
         responseObserver.onCompleted();
     }
 }

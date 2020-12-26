@@ -74,10 +74,7 @@ public class SecondaryHealthChecker {
     }
 
     public boolean isQuorumAvailable() {
-        // if 2 secondaries are UNHEALTHY
-        long unhealthySecondaries = secondaryHealth.values().stream()
-                .filter(in -> in.get() > CALLS_TO_BE_UNHEALTHY)
-                .count();
-        return unhealthySecondaries == secondaries.size();
+        // if all secondaries are UNHEALTHY
+        return !secondaryHealth.values().stream().allMatch(in -> in.get() > CALLS_TO_BE_UNHEALTHY);
     }
 }

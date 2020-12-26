@@ -51,7 +51,5 @@ message HealthCheckResponse {
 }
 
 enum HealthCheckStatus {
-  HEALTHY = 0;
-  SUSPECTED = 1;
-  UNHEALTHY = 2;
+  UP = 0;
 }

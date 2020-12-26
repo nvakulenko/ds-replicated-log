@@ -11,10 +11,10 @@ public class SecondaryConfiguration {
     @Bean(name = "secondary1")
     public LoggerGrpc.LoggerBlockingStub secondary1() {
         ManagedChannelBuilder<?> channelBuilder1 =
-//                ManagedChannelBuilder.forAddress("secondary-1", 6567)
-//                        .usePlaintext();
-                ManagedChannelBuilder.forAddress("0.0.0.0", 6567)
+                ManagedChannelBuilder.forAddress("secondary-1", 6567)
                         .usePlaintext();
+//                ManagedChannelBuilder.forAddress("0.0.0.0", 6567)
+//                        .usePlaintext();
         return LoggerGrpc.newBlockingStub(channelBuilder1.build());
     }
 

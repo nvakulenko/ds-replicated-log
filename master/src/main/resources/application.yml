@@ -1,1 +1,3 @@
+logging.level.root: INFO
+logging.level.io.grpc.internal: INFO
 

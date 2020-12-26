@@ -37,25 +37,27 @@ public class SecondaryHealthChecker {
 
     @Scheduled(fixedRate = 5000)
     public void checkSecondariesHealth() {
+
         // HEALTHY -> SUSPECTED if no response for 1 call -> UNHEALTHY if no response for 3 calls;
         LOGGER.info("Run Health Check on cluster...");
         secondaries.keySet()
                 .stream()
-                .forEach(secondary -> {
+                .forEach(secondary ->
+                {
                     try {
                         HealthCheckResponse healthCheckResponse = secondaries.get(secondary).healthCheck(HealthCheckRequest.newBuilder().build());
                         if (HealthCheckStatus.UP.equals(healthCheckResponse.getStatus()))
                             secondaryHealth.get(secondary).set(0);
                         else {
                             secondaryHealth.get(secondary).getAndIncrement();
-                            LOGGER.info("Secondary {} is down for {} attempts, marked as {}",
+                            LOGGER.error("Secondary {} is down for {} attempts, marked as {}",
                                     secondary,
                                     secondaryHealth.get(secondary),
                                     getSecondaryStatus(secondary));
                         }
                     } catch (Throwable e) {
                         secondaryHealth.get(secondary).getAndIncrement();
-                        LOGGER.info("Secondary {} is down for {} attempts, marked as {}",
+                        LOGGER.error("Secondary {} is down for {} attempts, marked as {}",
                                 secondary,
                                 secondaryHealth.get(secondary),
                                 getSecondaryStatus(secondary));
@@ -66,7 +68,7 @@ public class SecondaryHealthChecker {
     public SecondaryHealthStatus getSecondaryStatus(String secondary) {
         Integer failureCallsToSecondary = secondaryHealth.get(secondary).get();
         if (failureCallsToSecondary == 0) return SecondaryHealthStatus.HEALTHY;
-        if (failureCallsToSecondary >= CALLS_TO_BE_SUSPECTED && failureCallsToSecondary <= CALLS_TO_BE_UNHEALTHY)
+        if (failureCallsToSecondary >= CALLS_TO_BE_SUSPECTED && failureCallsToSecondary < CALLS_TO_BE_UNHEALTHY)
             return SecondaryHealthStatus.SUSPECTED;
         else return SecondaryHealthStatus.UNHEALTHY;
     }
@@ -78,5 +80,4 @@ public class SecondaryHealthChecker {
                 .count();
         return unhealthySecondaries == secondaries.size();
     }
-
 }

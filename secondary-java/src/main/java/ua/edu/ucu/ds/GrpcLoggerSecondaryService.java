@@ -90,7 +90,7 @@ public class GrpcLoggerSecondaryService extends LoggerGrpc.LoggerImplBase {
     @Override
     public void healthCheck(HealthCheckRequest request, StreamObserver<HealthCheckResponse> responseObserver) {
         responseObserver.onNext(HealthCheckResponse.newBuilder()
-                .setStatus(HealthCheckStatus.HEALTHY)
+                .setStatus(HealthCheckStatus.UP)
                 .build());
         responseObserver.onCompleted();
     }

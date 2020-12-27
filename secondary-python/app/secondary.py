@@ -31,7 +31,7 @@ class GrpcLogger(pb2_grpc.LoggerServicer):
         logging.info(f"Python secondary received AppendMessages request {str(item.log)}")
         response = pb2.AppendMessageResponse(responseCode=0)
         try:
-            if item.id in self.items:
+            if item.id in self.items.keys() or item.id in self.buffer.keys():
                 raise ValueError('Duplicated item')
             else:
                 delay = randint(2,10)
@@ -43,7 +43,7 @@ class GrpcLogger(pb2_grpc.LoggerServicer):
                     self.buffer[item.id] = item
                 logging.info(f"Python secondary added new item")
         except:
-            response = pb2.AppendMessageResponse(responseCode=2)
+            response = pb2.AppendMessageResponse(responseCode=2,responseMessage=f"Finishing processing log with id {str(item.id)} by randomly generated error")
             logging.info(f"Python secondary error occurs")
         return response
 

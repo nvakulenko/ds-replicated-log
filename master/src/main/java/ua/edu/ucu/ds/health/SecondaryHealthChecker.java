@@ -46,8 +46,11 @@ public class SecondaryHealthChecker {
                 {
                     try {
                         HealthCheckResponse healthCheckResponse = secondaries.get(secondary).healthCheck(HealthCheckRequest.newBuilder().build());
-                        if (HealthCheckStatus.UP.equals(healthCheckResponse.getStatus()))
+                        LOGGER.info("Health check on secondary {}...", secondary);
+                        if (HealthCheckStatus.UP.equals(healthCheckResponse.getStatus())) {
                             secondaryHealth.get(secondary).set(0);
+                            LOGGER.info("Secondary {} is {}", secondary, healthCheckResponse.getStatus());
+                        }
                         else {
                             secondaryHealth.get(secondary).getAndIncrement();
                             LOGGER.error("Secondary {} is down for {} attempts, marked as {}",

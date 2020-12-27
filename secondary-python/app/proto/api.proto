@@ -7,6 +7,7 @@ option java_outer_classname = "LoggerService";
 service Logger {
   rpc AppendMessage (AppendMessageRequest) returns (AppendMessageResponse) {}
   rpc ListMessages (ListMessagesRequest) returns (ListMessagesResponse) {}
+  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse) {}
 }
 
 message LogMessage {
@@ -32,6 +33,7 @@ enum AppendResponseCode {
   // some logical errors from secondary
   // we do not update logs
   ERROR_LOG_WITH_ID_ALREADY_EXISTS = 2;
+  ERROR_NO_QUORUM_IN_CLUSTER = 3;
 }
 
 message ListMessagesRequest {
@@ -39,4 +41,15 @@ message ListMessagesRequest {
 
 message ListMessagesResponse {
   repeated LogMessage logs = 1;
+}
+
+message HealthCheckRequest {
+}
+
+message HealthCheckResponse {
+  HealthCheckStatus status = 1;
+}
+
+enum HealthCheckStatus {
+  UP = 0;
 }

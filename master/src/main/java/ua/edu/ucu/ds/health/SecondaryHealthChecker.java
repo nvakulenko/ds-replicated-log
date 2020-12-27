@@ -49,7 +49,7 @@ public class SecondaryHealthChecker {
                         LOGGER.info("Health check on secondary {}...", secondary);
                         if (HealthCheckStatus.UP.equals(healthCheckResponse.getStatus())) {
                             secondaryHealth.get(secondary).set(0);
-                            LOGGER.info("Secondary {} is {}", secondary, healthCheckResponse.getStatus());
+                            LOGGER.info("Secondary health status {} is {}", secondary, healthCheckResponse.getStatus());
                         }
                         else {
                             secondaryHealth.get(secondary).getAndIncrement();

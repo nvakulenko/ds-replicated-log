@@ -47,6 +47,10 @@ class GrpcLogger(pb2_grpc.LoggerServicer):
             logging.info(f"Python secondary error occurs")
         return response
 
+    def HealthCheck(self, request, context):
+        logging.info(f"Python secondary received HealthCheck request")
+        health_response = pb2.HealthCheckResponse(status=0)
+        return health_response
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -57,7 +61,6 @@ def serve():
     server.start()
     try:
         while True:
-            logging.info(f"Python secondary is running on port {str(port)}")
             time.sleep(5)
     except KeyboardInterrupt:
         server.stop(0)

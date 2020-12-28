@@ -1,11 +1,12 @@
 package ua.edu.ucu.ds;
 
-import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ua.edu.ucu.*;
+import ua.edu.ucu.ds.health.SecondaryHealthChecker;
+import ua.edu.ucu.ds.health.SecondaryHealthStatus;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -16,46 +17,25 @@ import static ua.edu.ucu.AppendResponseCode.*;
 @Service
 public class LogReplicatorService {
 
-    @Value("${secondary.retry.attempts}")
-    private Integer retryAttempts;
+    @Autowired
+    private SecondaryHealthChecker secondaryHealthChecker;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcMasterLoggerService.class);
     private Map<String, LoggerGrpc.LoggerBlockingStub> secondaries;
-    private ConcurrentHashMap<String, List<FailureInformation>> failureStatistics;
 
-    public LogReplicatorService() {
-        ManagedChannelBuilder<?> channelBuilder1 =
-                ManagedChannelBuilder.forAddress("secondary-1", 6567)
-                        .usePlaintext();
-//                ManagedChannelBuilder.forAddress("0.0.0.0", 6567)
-//                        .usePlaintext();
-        LoggerGrpc.LoggerBlockingStub secondary1 = LoggerGrpc.newBlockingStub(channelBuilder1.build());
-        ManagedChannelBuilder<?> channelBuilder2 =
-                ManagedChannelBuilder.forAddress("secondary-2", 6567)
-                        .usePlaintext();
-        LoggerGrpc.LoggerBlockingStub secondary2 = LoggerGrpc.newBlockingStub(channelBuilder2.build());
-
+    public LogReplicatorService(LoggerGrpc.LoggerBlockingStub secondary1, LoggerGrpc.LoggerBlockingStub secondary2) {
         secondaries = new HashMap<>(2);
         secondaries.put("secondary-1", secondary1);
         secondaries.put("secondary-2", secondary2);
-
-        failureStatistics = new ConcurrentHashMap<>();
-        failureStatistics.put("secondary-1", Collections.synchronizedList(new ArrayList<FailureInformation>()));
-        failureStatistics.put("secondary-2", Collections.synchronizedList(new ArrayList<FailureInformation>()));
     }
 
     public Integer getSecondariesCount() {
         return secondaries.size();
     }
 
-    public ConcurrentHashMap<String, List<FailureInformation>> getFailureStatistics() {
-        return failureStatistics;
-    }
-
     public boolean replicateLog(LogEntity log) throws IllegalArgumentException {
         try {
             int writeConcern = log.getWriteConcern();
-
             // check range is less then master + secondaries count
             if (writeConcern - 1 > secondaries.size()) {
                 writeConcern = secondaries.size();
@@ -108,8 +88,17 @@ public class LogReplicatorService {
             try {
                 i++;
 
+                SecondaryHealthStatus secondaryStatus =
+                        secondaryHealthChecker.getSecondaryStatus(secondary.getKey());
+
+                // retry with delay in 5 seconds after 2 attempts
                 if (i > 2) {
                     Thread.sleep(5000);
+                }
+
+                // do not try to connect to unhealthy secondary
+                if (SecondaryHealthStatus.UNHEALTHY.equals(secondaryStatus)) {
+                    continue;
                 }
 
                 LOGGER.info("Replication attempt #{} to: {}, LOG: {}", i + 1, secondary.getKey(), log.getLog());
@@ -125,28 +114,9 @@ public class LogReplicatorService {
                         ERROR_LOG_WITH_ID_ALREADY_EXISTS.equals(appendMessageResponse.getResponseCode())) {
                     LOGGER.info("Replicated log {} successfully to {}", log.getId(), secondary.getKey());
                     return ReplicationStatus.REPLICATED;
-                } else {
-                    // TODO handleErrors();
-                    // connection errors - how do they look???
-                    // need to test to get to know how they look
-                    // logical errors
-                    failureStatistics.get(secondary.getKey())
-                            .add(FailureInformation.builder()
-                                    .logId(log.getId())
-                                    .replicationStatus(ReplicationStatus.FAILED_REPLICATION)
-                                    .appendResponseCode(appendMessageResponse.getResponseCode())
-                                    .attempt(i + 1)
-                                    .build());
                 }
             } catch (Throwable e) {
                 LOGGER.error(e.getLocalizedMessage(), e);
-                failureStatistics.get(secondary.getKey())
-                        .add(FailureInformation.builder()
-                                .logId(log.getId())
-                                .replicationStatus(ReplicationStatus.FAILED_REPLICATION)
-                                .failureReason(e.getLocalizedMessage())
-                                .attempt(i + 1)
-                                .build());
             }
         }
     }

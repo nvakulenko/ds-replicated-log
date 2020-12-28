@@ -24,6 +24,11 @@ class LoggerStub(object):
                 request_serializer=proto_dot_api__pb2.ListMessagesRequest.SerializeToString,
                 response_deserializer=proto_dot_api__pb2.ListMessagesResponse.FromString,
                 )
+        self.HealthCheck = channel.unary_unary(
+                '/Logger/HealthCheck',
+                request_serializer=proto_dot_api__pb2.HealthCheckRequest.SerializeToString,
+                response_deserializer=proto_dot_api__pb2.HealthCheckResponse.FromString,
+                )
 
 
 class LoggerServicer(object):
@@ -41,6 +46,12 @@ class LoggerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def HealthCheck(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_LoggerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -53,6 +64,11 @@ def add_LoggerServicer_to_server(servicer, server):
                     servicer.ListMessages,
                     request_deserializer=proto_dot_api__pb2.ListMessagesRequest.FromString,
                     response_serializer=proto_dot_api__pb2.ListMessagesResponse.SerializeToString,
+            ),
+            'HealthCheck': grpc.unary_unary_rpc_method_handler(
+                    servicer.HealthCheck,
+                    request_deserializer=proto_dot_api__pb2.HealthCheckRequest.FromString,
+                    response_serializer=proto_dot_api__pb2.HealthCheckResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -95,5 +111,22 @@ class Logger(object):
         return grpc.experimental.unary_unary(request, target, '/Logger/ListMessages',
             proto_dot_api__pb2.ListMessagesRequest.SerializeToString,
             proto_dot_api__pb2.ListMessagesResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def HealthCheck(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Logger/HealthCheck',
+            proto_dot_api__pb2.HealthCheckRequest.SerializeToString,
+            proto_dot_api__pb2.HealthCheckResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
